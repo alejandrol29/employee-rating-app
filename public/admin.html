@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel de administración</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="bg-light">
+  <div class="text-end p-3">
+    <button class="btn btn-outline-danger" onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <div class="container py-4" id="menu-principal">
+    <h2 class="text-center mb-4">Panel de administración</h2>
+    <div class="d-grid gap-3 text-center">
+      <button class="btn btn-outline-primary btn-lg" onclick="mostrarSeccion('agregar')">👤 Agregar empleados</button>
+      <button class="btn btn-outline-secondary btn-lg" onclick="mostrarSeccion('administrar')">🧑‍💼 Administrar empleados</button>
+      <button id="btnAgregarSucursal" class="btn btn-outline-success btn-lg" onclick="mostrarSeccion('sucursal')">🏢 Agregar sucursal</button>
+      <a href="estadisticas.html" class="btn btn-outline-info btn-lg">📊 Ver estadísticas</a>
+      <button id="btnUsuarios" class="btn btn-outline-dark btn-lg" onclick="window.location.href='usuarios.html'">👥 Administrar usuarios</button>
+    </div>
+  </div>
+
+  <!-- Secciones y formularios -->
+  <div class="container py-4 d-none" id="seccion-agregar">
+    <button class="btn btn-link mb-3" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Agregar empleado</h2>
+    <form id="employeeForm" class="card p-3 shadow-sm">
+      <div class="mb-3">
+        <label for="name" class="form-label">Nombre completo</label>
+        <input type="text" class="form-control" id="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="branch" class="form-label">Sucursal</label>
+        <select id="branch" class="form-select" required></select>
+      </div>
+      <div class="mb-3">
+        <label for="photo" class="form-label">Foto del empleado (600x800px)</label>
+        <input type="file" class="form-control" id="photo" accept="image/*" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Agregar</button>
+    </form>
+  </div>
+
+  <div class="container py-4 d-none" id="seccion-administrar">
+    <button class="btn btn-link mb-3" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Empleados registrados</h2>
+    <div class="table-responsive">
+      <table class="table table-striped" id="employeeTable">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Sucursal</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="container py-4 d-none" id="seccion-sucursal">
+    <button class="btn btn-link mb-3" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Agregar sucursal</h2>
+    <form id="branchForm" class="card p-3 shadow-sm">
+      <div class="mb-3">
+        <label for="branchName" class="form-label">Nombre de la sucursal</label>
+        <input type="text" class="form-control" id="branchName" required>
+      </div>
+      <div class="mb-3">
+        <label for="branchAddress" class="form-label">Dirección</label>
+        <input type="text" class="form-control" id="branchAddress">
+      </div>
+      <button type="submit" class="btn btn-success w-100">Crear sucursal</button>
+    </form>
+  </div>
+
+  <!-- Modal editar -->
+  <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formEditarEmpleado">
+          <div class="modal-header">
+            <h5 class="modal-title">Editar empleado</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-id">
+            <div class="mb-3">
+              <label for="edit-name" class="form-label">Nombre</label>
+              <input type="text" id="edit-name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="edit-branch" class="form-label">Sucursal</label>
+              <select id="edit-branch" class="form-select" required></select>
+            </div>
+            <div class="mb-3">
+              <label for="edit-photo" class="form-label">Foto (opcional)</label>
+              <input type="file" id="edit-photo" class="form-control" accept="image/*">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Actualizar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <div id="toastMsg" class="toast align-items-center text-white bg-primary border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastText">Mensaje</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('isSuperAdmin');
+      window.location.href = 'login.html';
+    }
+
+    function mostrarMensaje(tipo, texto) {
+      const toast = document.getElementById('toastMsg');
+      const toastText = document.getElementById('toastText');
+      toast.classList.remove('bg-success', 'bg-danger', 'bg-primary');
+      toast.classList.add(`bg-${tipo}`);
+      toastText.textContent = texto;
+      new bootstrap.Toast(toast).show();
+    }
+
+    function mostrarSeccion(nombre) {
+      document.querySelectorAll('[id^="seccion-"]').forEach(div => div.classList.add('d-none'));
+      document.getElementById('menu-principal').classList.add('d-none');
+      document.getElementById(`seccion-${nombre}`).classList.remove('d-none');
+      if (nombre === 'administrar') cargarEmpleados();
+    }
+
+    function volverAlMenu() {
+      document.querySelectorAll('[id^="seccion-"]').forEach(div => div.classList.add('d-none'));
+      document.getElementById('menu-principal').classList.remove('d-none');
+    }
+
+    async function inicializar() {
+      const token = localStorage.getItem('token');
+      const isSuperAdmin = localStorage.getItem('isSuperAdmin') === 'true';
+
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!isSuperAdmin) {
+        document.getElementById('btnUsuarios')?.classList.add('d-none');
+        document.getElementById('btnAgregarSucursal')?.classList.add('d-none');
+      }
+
+      await cargarSucursales();
+    }
+
+    async function cargarSucursales() {
+        const res = await fetch('/branches', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+        });
+
+      const branches = await res.json();
+      const select = document.getElementById('branch');
+      select.innerHTML = '';
+      branches.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.name;
+        select.appendChild(opt);
+      });
+      const selectEdit = document.getElementById('edit-branch');
+      if (selectEdit) selectEdit.innerHTML = select.innerHTML;
+    }
+
+    async function cargarEmpleados() {
+        const res = await fetch('/employees', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+        });
+      const empleados = await res.json();
+      const tbody = document.querySelector('#employeeTable tbody');
+      tbody.innerHTML = '';
+      empleados.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img src="${e.photoUrl}" width="50" height="50" style="border-radius:50%; object-fit:cover"></td>
+          <td>${e.name}</td>
+          <td>${e.branch.name}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" onclick="editarEmpleado(${e.id})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${e.id})">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function eliminarEmpleado(id) {
+      if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
+      const res = await fetch(`/employees/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+        });
+
+      res.ok ? (mostrarMensaje('success', 'Empleado eliminado'), cargarEmpleados()) : mostrarMensaje('danger', 'Error al eliminar');
+    }
+
+    async function editarEmpleado(id) {
+        const e = await (await fetch(`/employees/${id}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+        })).json();
+
+      document.getElementById('edit-id').value = e.id;
+      document.getElementById('edit-name').value = e.name;
+      document.getElementById('edit-branch').value = e.branchId;
+      new bootstrap.Modal(document.getElementById('modalEditar')).show();
+    }
+
+    document.getElementById('formEditarEmpleado').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const name = document.getElementById('edit-name').value;
+      const branchId = document.getElementById('edit-branch').value;
+      const photo = document.getElementById('edit-photo').files[0];
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('branchId', branchId);
+      if (photo) formData.append('photo', photo);
+      const res = await fetch(`/employees/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+        });
+
+      if (res.ok) {
+        mostrarMensaje('success', 'Empleado actualizado');
+        document.getElementById('formEditarEmpleado').reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
+        cargarEmpleados();
+      } else {
+        const data = await res.json();
+        mostrarMensaje('danger', data.error || 'Error al actualizar');
+      }
+    });
+
+    document.getElementById('employeeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const branchId = parseInt(document.getElementById('branch').value);
+      const photo = document.getElementById('photo').files[0];
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('branchId', branchId);
+      formData.append('photo', photo);
+      const res = await fetch('/employees', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+        });
+
+      res.ok ? (mostrarMensaje('success', 'Empleado agregado ✅'), employeeForm.reset(), cargarEmpleados()) : mostrarMensaje('danger', 'Error al agregar empleado');
+    });
+
+    document.getElementById('branchForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('branchName').value;
+      const address = document.getElementById('branchAddress').value;
+      const res = await fetch('/branches', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ name, address })
+        });
+
+      res.ok ? (mostrarMensaje('success', 'Sucursal creada'), document.getElementById('branchForm').reset(), cargarSucursales()) : mostrarMensaje('danger', 'Error al crear sucursal');
+    });
+
+    document.addEventListener('DOMContentLoaded', inicializar);
+  </script>
+</body>
+</html>

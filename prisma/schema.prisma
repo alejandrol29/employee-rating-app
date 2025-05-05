@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id              Int           @id @default(autoincrement())
+  name            String
+  address         String?
+  employees       Employee[]
+  userBranches    UserBranch[]  
+  clientUsers     User[]        @relation("ClientUserBranch")
+  createdAt       DateTime      @default(now())
+}
+
+model Rating {
+  id         Int      @id @default(autoincrement())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId Int
+  stars      Int
+  comment    String?
+  email      String? 
+  createdAt  DateTime @default(now())
+}
+
+model Employee {
+  id        Int        @id @default(autoincrement())
+  name      String
+  photoUrl  String
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  branchId  Int
+  ratings   Rating[]
+  createdAt DateTime   @default(now())
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  username       String        @unique
+  password       String
+  role           String        @default("admin") // puede ser: "superadmin", "admin", "clientUser"
+  isSuperAdmin   Boolean       @default(false)
+  userBranches   UserBranch[]  
+  clientBranchId Int?
+  clientBranch   Branch?       @relation("ClientUserBranch", fields: [clientBranchId], references: [id])
+  createdAt      DateTime      @default(now())
+}
+
+model UserBranch {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  branch    Branch  @relation(fields: [branchId], references: [id])
+  branchId  Int
+}
