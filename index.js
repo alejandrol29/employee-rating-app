@@ -107,15 +107,17 @@ app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     console.log('Intentando login con usuario:', username);
-    const user = await prisma.user.findUnique({
-        where: { username },
-        include: {
-          userBranches: {
-            include: { branch: true }
-          },
-          clientBranch: true
-        }
-    });      
+    const user = await prisma.user.findFirst({
+      where: {
+        username: username.toLowerCase()
+      },
+      include: {
+        userBranches: {
+          include: { branch: true }
+        },
+        clientBranch: true
+      }
+    });         
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -497,7 +499,7 @@ app.post('/users', authenticateToken, async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
   
       const userData = {
-        username,
+        username: username.toLowerCase(),
         password: hashedPassword,
         isSuperAdmin,
         role
