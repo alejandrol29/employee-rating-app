@@ -22,14 +22,25 @@
       border-radius: 0.5rem;
     }
     .star {
-      font-size: 2rem;
+      font-size: 2.5rem;
       color: lightgray;
       cursor: pointer;
       transition: color 0.2s;
     }
-    .star.selected,
-    .star.hover {
+    .star.selected::before,
+    .star.hover::before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      content: "\f005";
       color: gold;
+    }
+    .star.selected {
+      animation: bounce 0.3s ease;
+    }
+    @keyframes bounce {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
     }
     #toastContainer {
       position: fixed;
@@ -59,57 +70,28 @@
       0% { transform: translateY(0); opacity: 1; }
       100% { transform: translateY(100vh); opacity: 0; }
     }
-    .star {
-      font-size: 2.5rem;
-      color: lightgray;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-
-    .star.selected::before,
-    .star.hover::before {
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      content: "\f005";
-      color: gold;
-    }
     .modal.fade .modal-dialog {
       transform: scale(0.95);
       opacity: 0;
       transition: all 0.3s ease-out;
     }
-
     .modal.show .modal-dialog {
       transform: scale(1);
       opacity: 1;
     }
     .fade-in {
       opacity: 0;
-      animation: fadeIn 0.6s ease-out forwards;
+      animation: fadeIn 0.5s ease-out forwards;
     }
-
     @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-    .star.selected {
-      animation: bounce 0.3s ease;
-    }
-
-    @keyframes bounce {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(1.3); }
-      100% { transform: scale(1); }
+      to { opacity: 1; }
     }
     .btn-primary:hover {
       box-shadow: 0 0 10px rgba(13, 110, 253, 0.4);
     }
-
   </style>
 </head>
 <body class="bg-light">
-
   <div class="position-absolute top-0 end-0 p-3">
     <button class="btn btn-light border" onclick="logout()" title="Cerrar sesión">
       <i class="fas fa-sign-out-alt"></i>
@@ -118,28 +100,20 @@
   <div class="text-center mt-4 mb-3">
     <img src="images/centro_tapicero.png" alt="Centro Tapicero" class="img-fluid" style="max-width: 500px;">
   </div>
-  
   <div class="container py-4">
     <h2 class="text-center mb-4" id="tituloSucursal">Empleados</h2>
     <div id="empleadosContainer" class="row g-4 justify-content-center"></div>
   </div>
-
   <div id="toastContainer"></div>
   <div class="confetti" id="confetti"></div>
-
   <div class="modal fade" id="modalCalificar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content text-center p-4">
         <form id="formCalificacion">
           <img src="images/incuerito.png" alt="Personaje Centro Tapicero" class="img-fluid mb-3 fade-in" style="max-width: 150px;">
-          <p class="mb-3 fw-semibold fade-in">
-            Tenemos un compromiso:<br>
-            Mejorar nuestra atención todos los días.
-          <p>
+          <p class="mb-3 fw-semibold fade-in">Tenemos un compromiso:<br>Mejorar nuestra atención todos los días.</p>
           <h5 class="mb-3 fade-in" id="modalTitulo">¿Cómo te atendió hoy?</h5>
-          
           <input type="hidden" id="calificar-id">
-      
           <div class="mb-3 fade-in" id="estrellasContainer">
             <i class="fa-regular fa-star star" data-value="1"></i>
             <i class="fa-regular fa-star star" data-value="2"></i>
@@ -147,35 +121,26 @@
             <i class="fa-regular fa-star star" data-value="4"></i>
             <i class="fa-regular fa-star star" data-value="5"></i>
           </div>
-      
           <div class="mb-3 w-100">
             <label class="form-label">Comentario (opcional)</label>
             <textarea id="comentario" class="form-control" rows="3"></textarea>
           </div>
-      
           <div class="mb-3 w-100 d-none" id="emailContainer">
             <label class="form-label">Correo electrónico (si deseas que te contactemos)</label>
             <input type="email" id="emailCliente" class="form-control">
           </div>
-      
           <button type="submit" class="btn btn-primary rounded-pill px-4 mt-3">Confirmar</button>
         </form>
       </div>
-      
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
-    }
+    if (!token) window.location.href = 'login.html';
 
     function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('isSuperAdmin');
-      localStorage.removeItem('branchName');
+      localStorage.clear();
       window.location.href = 'login.html';
     }
 
@@ -190,14 +155,11 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const empleados = await res.json();
-
         if (!empleados.length || empleados.error) {
           tituloSucursal.textContent = 'Sucursal no encontrada o sin empleados';
           return;
         }
-
         tituloSucursal.textContent = `Sucursal: ${branchName.charAt(0).toUpperCase() + branchName.slice(1)}`;
-
         empleados.forEach(e => {
           const col = document.createElement('div');
           col.className = 'col-md-4 col-sm-6';
@@ -211,7 +173,7 @@
           `;
           empleadosContainer.appendChild(col);
         });
-      } catch (err) {
+      } catch {
         tituloSucursal.textContent = 'Error al cargar empleados';
       }
     }
@@ -219,38 +181,82 @@
     function abrirModal(id, nombre) {
       document.getElementById('calificar-id').value = id;
       ratingSeleccionado = 0;
-      actualizarEstrellas(0);
-      document.getElementById('formCalificacion').reset();
       document.getElementById('modalTitulo').textContent = `¿Cómo te atendió hoy ${nombre}?`;
+      document.getElementById('formCalificacion').reset();
       document.getElementById('emailContainer').classList.add('d-none');
+      actualizarEstrellas(0);
       const modal = new bootstrap.Modal(document.getElementById('modalCalificar'));
       modal.show();
     }
 
     function actualizarEstrellas(valor) {
+      ratingSeleccionado = valor;
       document.querySelectorAll('.star').forEach(star => {
         const val = parseInt(star.getAttribute('data-value'));
         star.classList.toggle('selected', val <= valor);
       });
-      document.getElementById('emailContainer').classList.toggle('d-none', valor > 2);
+      const emailContainer = document.getElementById('emailContainer');
+      if (valor > 0 && valor <= 2) {
+        emailContainer.classList.remove('d-none');
+      } else {
+        emailContainer.classList.add('d-none');
+      }
     }
 
     document.querySelectorAll('.star').forEach(star => {
       star.addEventListener('click', () => {
-        ratingSeleccionado = parseInt(star.getAttribute('data-value'));
-        actualizarEstrellas(ratingSeleccionado);
+        const value = parseInt(star.getAttribute('data-value'));
+        actualizarEstrellas(value);
       });
       star.addEventListener('mouseover', () => {
-        const hoverValue = parseInt(star.getAttribute('data-value'));
+        const value = parseInt(star.getAttribute('data-value'));
         document.querySelectorAll('.star').forEach(s => {
           const val = parseInt(s.getAttribute('data-value'));
-          s.classList.toggle('hover', val <= hoverValue);
+          s.classList.toggle('hover', val <= value);
         });
       });
       star.addEventListener('mouseout', () => {
         document.querySelectorAll('.star').forEach(s => s.classList.remove('hover'));
       });
     });
+
+    document.getElementById('formCalificacion').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('calificar-id').value;
+    const comentario = document.getElementById('comentario').value;
+    const email = document.getElementById('emailCliente').value;
+
+    // Releer valor directamente de estrellas seleccionadas por seguridad
+    const estrellasSeleccionadas = [...document.querySelectorAll('.star.selected')].length;
+
+    if (!estrellasSeleccionadas) {
+      alert('Por favor selecciona una cantidad de estrellas.');
+      return;
+    }
+
+    await fetch('/ratings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employeeId: id,
+        stars: estrellasSeleccionadas,
+        comment: comentario,
+        email
+      })
+    });
+
+  bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
+  document.getElementById('formCalificacion').reset();
+  actualizarEstrellas(0);
+
+  if (estrellasSeleccionadas <= 2) {
+    mostrarToast('Gracias por tu comentario, lo tendremos en cuenta.');
+  } else {
+    mostrarToast('¡Gracias por tu calificación!');
+    lanzarConfetti();
+  }
+});
 
     function mostrarToast(mensaje) {
       const toast = document.createElement('div');
@@ -278,36 +284,6 @@
         setTimeout(() => confetti.remove(), 4000);
       }
     }
-
-    document.getElementById('formCalificacion').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('calificar-id').value;
-      const comentario = document.getElementById('comentario').value;
-      const email = document.getElementById('emailCliente').value;
-
-      if (!ratingSeleccionado) {
-        alert('Por favor selecciona una cantidad de estrellas.');
-        return;
-      }
-
-      await fetch('/ratings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ employeeId: id, stars: ratingSeleccionado, comment: comentario, email })
-      });
-
-      bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
-      document.getElementById('formCalificacion').reset();
-      actualizarEstrellas(0);
-      if (ratingSeleccionado <= 2) {
-        mostrarToast('Gracias por tu comentario, lo tendremos en cuenta.');
-      } else {
-        mostrarToast('¡Gracias por tu calificación!');
-        lanzarConfetti();
-      }
-    });
 
     cargarEmpleados();
   </script>
