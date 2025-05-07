@@ -42,8 +42,10 @@ app.post('/ratings', async (req, res) => {
       if (req.user.isSuperAdmin) {
         // Devuelve todos los empleados
         employees = await prisma.employee.findMany({
-          include: { branch: true }
+          include: { branch: true },
+          orderBy: { name: 'asc' } // opcional
         });
+        
       } else {
         // Devuelve solo empleados de sucursales autorizadas
         employees = await prisma.employee.findMany({
@@ -299,6 +301,37 @@ app.put('/employees/:id', authenticateToken, upload.single('photo'), async (req,
     res.status(500).json({ error: 'Error al actualizar empleado' });
   }
 });
+
+// Activar o desactivar un empleado
+app.put('/employees/:id/toggle', authenticateToken, async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  try {
+    const employee = await prisma.employee.findUnique({ where: { id } });
+
+    if (!employee) {
+      return res.status(404).json({ error: 'Empleado no encontrado' });
+    }
+
+    const puedeModificar =
+      req.user.isSuperAdmin || req.user.branchIds.includes(employee.branchId);
+
+    if (!puedeModificar) {
+      return res.status(403).json({ error: 'No estás autorizado para modificar este empleado' });
+    }
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: { active: !employee.active }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cambiar estado del empleado' });
+  }
+});
+
 
 app.delete('/employees/:id', authenticateToken, async (req, res) => {
   try {

@@ -242,11 +242,29 @@
           <td>${e.branch.name}</td>
           <td>
             <button class="btn btn-sm btn-primary me-1" onclick="editarEmpleado(${e.id})">Editar</button>
+            <button class="btn btn-sm btn-${e.active ? 'warning' : 'success'} me-1" onclick="toggleEmpleado(${e.id})">
+              ${e.active ? 'Deshabilitar' : 'Habilitar'}
+            </button>
             <button class="btn btn-sm btn-danger" onclick="eliminarEmpleado(${e.id})">Eliminar</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    async function toggleEmpleado(id) {
+      if (!confirm('¿Estás seguro de cambiar el estado de este empleado?')) return;
+      const res = await fetch(`/employees/${id}/toggle`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        mostrarMensaje('success', 'Estado del empleado actualizado');
+        cargarEmpleados();
+      } else {
+        const data = await res.json();
+        mostrarMensaje('danger', data.error || 'Error al cambiar estado');
+      }
     }
 
     async function eliminarEmpleado(id) {

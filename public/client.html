@@ -161,18 +161,21 @@
         }
         tituloSucursal.textContent = `Sucursal: ${branchName.charAt(0).toUpperCase() + branchName.slice(1)}`;
         empleados.forEach(e => {
-          const col = document.createElement('div');
-          col.className = 'col-md-4 col-sm-6';
-          col.innerHTML = `
-            <div class="card employee-card" onclick="abrirModal(${e.id}, '${e.name}')">
-              <img src="${e.photoUrl}" alt="${e.name}" class="employee-photo">
-              <div class="card-body text-center">
-                <h5 class="card-title">${e.name}</h5>
-              </div>
+        if (!e.active) return; // 👈 este es el filtro para ocultar empleados inactivos
+
+        const col = document.createElement('div');
+        col.className = 'col-md-4 col-sm-6';
+        col.innerHTML = `
+          <div class="card employee-card" onclick="abrirModal(${e.id}, '${e.name}')">
+            <img src="${e.photoUrl}" alt="${e.name}" class="employee-photo">
+            <div class="card-body text-center">
+              <h5 class="card-title">${e.name}</h5>
             </div>
-          `;
-          empleadosContainer.appendChild(col);
-        });
+          </div>
+        `;
+        empleadosContainer.appendChild(col);
+      });
+
       } catch {
         tituloSucursal.textContent = 'Error al cargar empleados';
       }
