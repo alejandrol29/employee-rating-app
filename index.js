@@ -37,24 +37,21 @@ app.post('/ratings', async (req, res) => {
   // Listar todos los empleados con su sucursal
   app.get('/employees', authenticateToken, async (req, res) => {
     try {
-      let employees;
-  
-      if (req.user.isSuperAdmin) {
-        // Devuelve todos los empleados
-        employees = await prisma.employee.findMany({
-          include: { branch: true },
-          orderBy: { name: 'asc' } // opcional
-        });
-        
-      } else {
-        // Devuelve solo empleados de sucursales autorizadas
-        employees = await prisma.employee.findMany({
-          where: {
-            branchId: { in: req.user.branchIds }
-          },
-          include: { branch: true }
-        });
+      let whereClause = {};
+      const { branchId } = req.query;
+      
+      if (branchId) {
+        whereClause.branchId = parseInt(branchId);
+      } else if (!req.user.isSuperAdmin) {
+        // Si no es superadmin y no se especifica sucursal, filtrar por sucursales autorizadas
+        whereClause.branchId = { in: req.user.branchIds };
       }
+      
+      const employees = await prisma.employee.findMany({
+        where: whereClause,
+        include: { branch: true },
+        orderBy: { name: 'asc' }
+      });
   
       res.json(employees);
     } catch (error) {

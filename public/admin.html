@@ -1134,6 +1134,7 @@
         form.reset();
         form.classList.remove('was-validated');
         await cargarSucursales();
+        await cargarSucursalesAdmin(); // Actualizar la tabla de sucursales
       } catch (error) {
         mostrarMensaje('danger', error.message || 'Error al crear sucursal');
       } finally {
@@ -1195,8 +1196,7 @@
                   <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-sm btn-outline-danger ${cantidadEmpleados > 0 ? 'disabled' : ''}" 
-                  onclick="${cantidadEmpleados > 0 ? '' : `confirmarEliminarSucursal(${sucursal.id}, '${sucursal.name}')`}" 
-                  ${cantidadEmpleados > 0 ? 'disabled title="No se puede eliminar una sucursal con empleados"' : ''}>
+                  ${cantidadEmpleados > 0 ? 'disabled title="No se puede eliminar una sucursal con empleados"' : `onclick="confirmarEliminarSucursal(${sucursal.id}, '${sucursal.name}')"`}>
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
