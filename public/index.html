@@ -5,155 +5,418 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Califica tu atención</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    .employee-card img {
-      width: 100%;
-      height: auto;
-      border-radius: 1rem;
-    }
-    .star {
-      font-size: 2rem;
-      cursor: pointer;
-      color: lightgray;
-    }
-    .star.selected {
-      color: gold;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-light">
-    <button class="btn btn-outline-secondary float-end" onclick="logout()">Cerrar sesión</button>
-    <div class="container py-4">
-      <h2 class="text-center mb-4">¿Quién te atendió?</h2>
-      <div id="employee-list" class="row g-4"></div>
-    </div>
+<body>
+  <div class="position-absolute top-0 end-0 p-3">
+    <button class="btn btn-light border" onclick="logout()" title="Cerrar sesión">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
   
-    <!-- Modal -->
-    <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="ratingModalLabel">Calificar atención</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+  <div class="container py-4">
+    <h2 class="text-center mb-4 fade-in">¿Quién te atendió?</h2>
+    
+    <!-- Loading skeleton -->
+    <div id="loading-skeleton" class="row g-4">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+        <div class="card h-100 p-2 shadow-sm">
+          <div class="skeleton" style="height: 200px; border-radius: 1rem;"></div>
+          <div class="card-body text-center">
+            <div class="skeleton" style="height: 24px; width: 80%; margin: 0 auto;"></div>
           </div>
-          <div class="modal-body">
-            <p id="employeeName" class="fw-bold"></p>
-            <div class="text-center" id="modalStars"></div>
-            <div class="form-group mt-3">
-              <label for="comment">Comentario (opcional)</label>
-              <textarea id="comment" class="form-control" rows="3"></textarea>
-            </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+        <div class="card h-100 p-2 shadow-sm">
+          <div class="skeleton" style="height: 200px; border-radius: 1rem;"></div>
+          <div class="card-body text-center">
+            <div class="skeleton" style="height: 24px; width: 70%; margin: 0 auto;"></div>
           </div>
-          <div class="modal-footer">
-            <button id="submitRating" class="btn btn-primary">Enviar</button>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-none d-md-block">
+        <div class="card h-100 p-2 shadow-sm">
+          <div class="skeleton" style="height: 200px; border-radius: 1rem;"></div>
+          <div class="card-body text-center">
+            <div class="skeleton" style="height: 24px; width: 60%; margin: 0 auto;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-none d-lg-block">
+        <div class="card h-100 p-2 shadow-sm">
+          <div class="skeleton" style="height: 200px; border-radius: 1rem;"></div>
+          <div class="card-body text-center">
+            <div class="skeleton" style="height: 24px; width: 75%; margin: 0 auto;"></div>
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Employee list (hidden initially) -->
+    <div id="employee-list" class="row g-4" style="display: none;"></div>
+    
+    <!-- Error message -->
+    <div id="error-message" class="alert alert-danger text-center my-4" style="display: none;">
+      <i class="fas fa-exclamation-circle me-2"></i>
+      <span>Error al cargar empleados. Por favor intenta nuevamente.</span>
+    </div>
+  </div>
   
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const token = localStorage.getItem('token');
-        if (!token) {
-        window.location.href = 'login.html';
-    }
-    function logout() {
-        localStorage.removeItem('token');
-        window.location.href = 'login.html';
-    }
-    const res = await fetch('/ruta-protegida', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-      let selectedEmployee = null;
-      let selectedScore = 0;
-  
-      async function fetchEmployees() {
-        const res = await fetch('/employees');
-        return await res.json();
-      }
-  
-      function renderEmployees(employees) {
-        const list = document.getElementById('employee-list');
-        list.innerHTML = '';
-  
-        employees.forEach(emp => {
-          const card = document.createElement('div');
-          card.className = 'col-12 col-sm-6 col-md-4 col-lg-3';
-          card.innerHTML = `
-            <div class="card h-100 employee-card p-2 shadow-sm text-center" style="cursor: pointer;" onclick="openModal(${emp.id}, '${emp.name}')">
-                <img src="${emp.photoUrl}" alt="${emp.name}" />
-                <div class="card-body">
-                <h5 class="card-title">${emp.name}</h5>
-                </div>
+  <!-- Modal -->
+  <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ratingModalLabel">Calificar atención</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <form id="ratingForm" class="needs-validation" novalidate>
+          <div class="modal-body">
+            <p id="employeeName" class="fw-bold text-center mb-3"></p>
+            
+            <div class="text-center mb-4">
+              <p class="mb-2">¿Cómo calificarías la atención recibida?</p>
+              <div class="star-rating" id="modalStars"></div>
+              <div class="invalid-feedback d-block" id="star-error" style="display: none;">
+                Por favor selecciona una calificación
+              </div>
             </div>
-            `;
-          list.appendChild(card);
+            
+            <div class="form-group mb-3">
+              <label for="comment" class="form-label">Comentario (opcional)</label>
+              <textarea id="comment" class="form-control" rows="3" placeholder="Cuéntanos tu experiencia..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" id="submitRating" class="btn btn-primary">
+              <span id="submitText">Enviar</span>
+              <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="ratingToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i>
+          <span id="toastMessage">¡Gracias por tu calificación!</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Confetti animation container -->
+  <div id="confetti-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1050; display: none;"></div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Auth check
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'login.html';
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+    
+    // Variables
+    let selectedEmployee = null;
+    let selectedScore = 0;
+    
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('ratingToast');
+      const toastMessage = document.getElementById('toastMessage');
+      const iconElement = toast.querySelector('.fas');
+      
+      // Remove previous classes
+      toast.classList.remove('bg-success', 'bg-danger', 'bg-warning');
+      iconElement.classList.remove('fa-check-circle', 'fa-exclamation-circle', 'fa-exclamation-triangle');
+      
+      // Add appropriate classes based on type
+      toast.classList.add(`bg-${type}`);
+      
+      // Set appropriate icon
+      if (type === 'success') {
+        iconElement.classList.add('fa-check-circle');
+      } else if (type === 'danger') {
+        iconElement.classList.add('fa-exclamation-circle');
+      } else {
+        iconElement.classList.add('fa-exclamation-triangle');
+      }
+      
+      toastMessage.textContent = message;
+      const toastBootstrap = new bootstrap.Toast(toast);
+      toastBootstrap.show();
+    }
+    
+    // Create confetti animation
+    function createConfetti() {
+      const container = document.getElementById('confetti-container');
+      container.style.display = 'block';
+      container.innerHTML = '';
+      
+      const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+      
+      for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'absolute';
+        confetti.style.width = `${Math.random() * 10 + 5}px`;
+        confetti.style.height = `${Math.random() * 10 + 5}px`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.top = '-20px';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        confetti.style.opacity = Math.random() + 0.5;
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
+        
+        container.appendChild(confetti);
+      }
+      
+      // Create CSS animation if it doesn't exist
+      if (!document.getElementById('confetti-animation')) {
+        const style = document.createElement('style');
+        style.id = 'confetti-animation';
+        style.textContent = `
+          @keyframes fall {
+            0% { transform: translateY(0) rotate(0); }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // Remove confetti after animation
+      setTimeout(() => {
+        container.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Fetch employees with error handling and loading state
+    async function fetchEmployees() {
+      try {
+        const loadingSkeleton = document.getElementById('loading-skeleton');
+        const employeeList = document.getElementById('employee-list');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Show loading skeleton
+        loadingSkeleton.style.display = 'flex';
+        employeeList.style.display = 'none';
+        errorMessage.style.display = 'none';
+        
+        // Fetch data with authorization header
+        const res = await fetch('/employees', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch employees');
+        }
+        
+        const employees = await res.json();
+        
+        // Hide loading skeleton and show employee list
+        loadingSkeleton.style.display = 'none';
+        employeeList.style.display = 'flex';
+        
+        return employees;
+      } catch (error) {
+        // Show error message
+        document.getElementById('loading-skeleton').style.display = 'none';
+        document.getElementById('error-message').style.display = 'block';
+        console.error('Error fetching employees:', error);
+        return [];
+      }
+    }
+    
+    // Render employees with improved card design
+    function renderEmployees(employees) {
+      const list = document.getElementById('employee-list');
+      list.innerHTML = '';
+      
+      if (employees.length === 0) {
+        list.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+            <p class="lead">No hay empleados disponibles en este momento.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      employees.forEach(emp => {
+        const card = document.createElement('div');
+        card.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-4 fade-in';
+        card.innerHTML = `
+          <div class="card h-100 employee-card p-2 shadow-sm text-center" onclick="openModal(${emp.id}, '${emp.name}')">
+            <div class="position-relative">
+              <img src="${emp.photoUrl}" alt="${emp.name}" class="img-fluid" style="border-radius: 1rem; aspect-ratio: 3/4; object-fit: cover;" />
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">${emp.name}</h5>
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+    
+    // Open modal with improved star rating
+    function openModal(id, name) {
+      selectedEmployee = id;
+      selectedScore = 0;
+      
+      document.getElementById('employeeName').innerText = name;
+      document.getElementById('comment').value = '';
+      document.getElementById('star-error').style.display = 'none';
+      
+      // Reset form validation
+      document.getElementById('ratingForm').classList.remove('was-validated');
+      
+      // Reset submit button
+      const submitButton = document.getElementById('submitRating');
+      const submitText = document.getElementById('submitText');
+      const submitSpinner = document.getElementById('submitSpinner');
+      submitButton.disabled = false;
+      submitText.textContent = 'Enviar';
+      submitSpinner.classList.add('d-none');
+      
+      renderModalStars();
+      
+      const modal = new bootstrap.Modal(document.getElementById('ratingModal'));
+      modal.show();
+    }
+    
+    // Render stars with improved interaction
+    function renderModalStars() {
+      const container = document.getElementById('modalStars');
+      container.innerHTML = '';
+      
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('i');
+        star.className = i <= selectedScore ? 'fas fa-star star selected' : 'far fa-star star';
+        star.setAttribute('data-value', i);
+        star.setAttribute('aria-label', `${i} estrellas`);
+        container.appendChild(star);
+        
+        // Add event listeners
+        star.addEventListener('click', () => {
+          selectedScore = i;
+          renderModalStars();
+          document.getElementById('star-error').style.display = 'none';
+        });
+        
+        star.addEventListener('mouseover', () => {
+          // Highlight stars on hover
+          document.querySelectorAll('#modalStars .star').forEach((s, index) => {
+            if (index < i) {
+              s.className = 'fas fa-star star hover';
+            } else {
+              s.className = 'far fa-star star';
+            }
+          });
         });
       }
-  
-      function openModal(id, name) {
-        selectedEmployee = id;
-        selectedScore = 0;
-  
-        document.getElementById('employeeName').innerText = name;
-        document.getElementById('comment').value = '';
-        renderModalStars();
-  
-        const modal = new bootstrap.Modal(document.getElementById('ratingModal'));
-        modal.show();
+      
+      // Add mouseout event to container
+      container.addEventListener('mouseout', () => {
+        document.querySelectorAll('#modalStars .star').forEach((s, index) => {
+          if (index < selectedScore) {
+            s.className = 'fas fa-star star selected';
+          } else {
+            s.className = 'far fa-star star';
+          }
+        });
+      });
+    }
+    
+    // Submit rating with validation and loading state
+    async function submitRating(e) {
+      e.preventDefault();
+      
+      // Validate star rating
+      if (!selectedEmployee || selectedScore === 0) {
+        document.getElementById('star-error').style.display = 'block';
+        return;
       }
-  
-      function renderModalStars() {
-        const container = document.getElementById('modalStars');
-        container.innerHTML = '';
-  
-        for (let i = 1; i <= 5; i++) {
-          const star = document.createElement('span');
-          star.innerHTML = '&#9733;';
-          star.className = 'star';
-          star.style.fontSize = '2rem';
-          star.style.cursor = 'pointer';
-          star.style.color = i <= selectedScore ? 'gold' : 'lightgray';
-          star.onclick = () => {
-            selectedScore = i;
-            renderModalStars();
-          };
-          container.appendChild(star);
-        }
-      }
-  
-      async function submitRating() {
-        if (!selectedEmployee || selectedScore === 0) {
-          alert('Seleccioná una puntuación para continuar.');
-          return;
-        }
-  
-        const comment = document.getElementById('comment').value;
-  
+      
+      // Get form data
+      const comment = document.getElementById('comment').value;
+      
+      // Show loading state
+      const submitButton = document.getElementById('submitRating');
+      const submitText = document.getElementById('submitText');
+      const submitSpinner = document.getElementById('submitSpinner');
+      submitButton.disabled = true;
+      submitText.textContent = 'Enviando...';
+      submitSpinner.classList.remove('d-none');
+      
+      try {
         const res = await fetch('/ratings', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({
             employeeId: selectedEmployee,
             score: selectedScore,
-            comment: comment || null // si lo vas a usar más adelante
+            comment: comment || null
           })
         });
-  
+        
         if (res.ok) {
-          alert('¡Gracias por tu calificación!');
+          // Hide modal
           bootstrap.Modal.getInstance(document.getElementById('ratingModal')).hide();
+          
+          // Show success message
+          showToast('¡Gracias por tu calificación!', 'success');
+          
+          // Show confetti for high ratings
+          if (selectedScore >= 4) {
+            createConfetti();
+          }
         } else {
-          alert('Error al enviar calificación');
+          // Show error message
+          showToast('Error al enviar calificación. Intenta nuevamente.', 'danger');
+          
+          // Reset button state
+          submitButton.disabled = false;
+          submitText.textContent = 'Enviar';
+          submitSpinner.classList.add('d-none');
         }
+      } catch (error) {
+        // Show error message
+        showToast('Error de conexión. Intenta nuevamente.', 'danger');
+        
+        // Reset button state
+        submitButton.disabled = false;
+        submitText.textContent = 'Enviar';
+        submitSpinner.classList.add('d-none');
       }
-  
-      document.getElementById('submitRating').addEventListener('click', submitRating);
-  
+    }
+    
+    // Event listeners
+    document.getElementById('ratingForm').addEventListener('submit', submitRating);
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
       fetchEmployees().then(renderEmployees);
-    </script>
-  </body>  
+    });
+  </script>
+</body>  
 </html>
