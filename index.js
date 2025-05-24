@@ -700,6 +700,26 @@ app.delete('/branches/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Obtener una sucursal específica por ID
+app.get('/branches/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    
+    const branch = await prisma.branch.findUnique({
+      where: { id }
+    });
+    
+    if (!branch) {
+      return res.status(404).json({ error: 'Sucursal no encontrada' });
+    }
+    
+    res.json(branch);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener datos de la sucursal' });
+  }
+});
+
 app.put('/employees/:id/branch', authenticateToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
