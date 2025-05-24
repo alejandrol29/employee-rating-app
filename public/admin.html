@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel de administración</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    .center-wrapper {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 2rem;
+    }
+
+    .admin-button {
+      font-size: 1.25rem;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .admin-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .admin-button:active {
+      transform: translateY(0);
+    }
+
+    .btn[onclick="logout()"]:hover {
+      background-color: #f1f3f5;
+      transform: rotate(5deg);
+    }
+
+    .form-label {
+      font-weight: 500;
+    }
+
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+    }
+    
+    .employee-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    
+    .employee-img:hover {
+      transform: scale(1.2);
+    }
+    
+    .file-upload-wrapper {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    
+    .file-upload-preview {
+      max-width: 100%;
+      max-height: 150px;
+      margin-top: 0.5rem;
+      border-radius: 0.5rem;
+      display: none;
+    }
+    
+    .drag-drop-zone {
+      border: 2px dashed #dee2e6;
+      border-radius: 0.5rem;
+      padding: 2rem 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      background-color: #f8f9fa;
+      cursor: pointer;
+    }
+    
+    .drag-drop-zone:hover, .drag-drop-zone.dragover {
+      border-color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .table-responsive {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .table th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .back-button {
+      transition: transform 0.3s ease;
+    }
+    
+    .back-button:hover {
+      transform: translateX(-5px);
+    }
+    
+    .section-enter {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="position-absolute top-0 end-0 p-3">
+    <button class="btn btn-light border shadow-sm" onclick="logout()" title="Cerrar sesión">
+      <i class="fas fa-sign-out-alt"></i>
+    </button>
+  </div>
+
+  <div class="container center-wrapper fade-in" id="menu-principal">
+    <h2 class="text-center mb-4 fw-bold">Panel de administración</h2>
+    <div class="d-grid gap-3 text-center w-100" style="max-width: 500px;">
+      <button class="btn btn-outline-dark fw-semibold admin-button" onclick="mostrarSeccion('agregar')">
+        <i class="fas fa-user-plus me-2"></i> Agregar empleados
+      </button>
+      <button class="btn btn-outline-dark fw-semibold admin-button" onclick="mostrarSeccion('administrar')">
+        <i class="fas fa-users-cog me-2"></i> Administrar empleados
+      </button>
+      <button id="btnAdministrarSucursales" class="btn btn-outline-dark fw-semibold admin-button" onclick="mostrarSeccion('administrar-sucursales')">
+        <i class="fas fa-building-user me-2"></i> Administrar sucursales
+      </button>
+      <a href="estadisticas.html" class="btn btn-outline-dark fw-semibold admin-button">
+        <i class="fas fa-chart-bar me-2"></i> Ver estadísticas
+      </a>
+      <button id="btnUsuarios" class="btn btn-outline-dark fw-semibold admin-button" onclick="window.location.href='usuarios.html'">
+        <i class="fas fa-users me-2"></i> Administrar usuarios
+      </button>
+    </div>
+  </div>
+
+  <!-- Sección Agregar Empleado -->
+  <div class="container py-4 d-none" id="seccion-agregar">
+    <button class="btn btn-link mb-3 back-button" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Agregar empleado</h2>
+    <form id="employeeForm" class="card p-4 shadow-sm needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="name" class="form-label">Nombre completo</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-user"></i></span>
+          <input type="text" class="form-control" id="name" required>
+          <div class="invalid-feedback">
+            Por favor ingresa el nombre del empleado
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="branch" class="form-label">Sucursal</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-building"></i></span>
+          <select id="branch" class="form-select" required>
+            <option value="" selected disabled>Seleccionar sucursal</option>
+          </select>
+          <div class="invalid-feedback">
+            Por favor selecciona una sucursal
+          </div>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label for="photo" class="form-label">Foto del empleado (600x800px)</label>
+        <div class="file-upload-wrapper">
+          <div class="drag-drop-zone" id="dragDropZone">
+            <i class="fas fa-cloud-upload-alt fa-2x mb-2"></i>
+            <p class="mb-0">Arrastra una imagen aquí o haz clic para seleccionar</p>
+            <input type="file" class="form-control d-none" id="photo" accept="image/*" required>
+          </div>
+          <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
+          <img id="photoPreview" class="file-upload-preview mt-3" alt="Vista previa">
+          <div class="invalid-feedback">
+            Por favor selecciona una foto para el empleado
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100" id="btnGuardarEmpleado">
+        <span id="btnGuardarEmpleadoText">Agregar empleado</span>
+        <span id="btnGuardarEmpleadoSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Sección Administrar Empleados -->
+  <div class="container py-4 d-none" id="seccion-administrar">
+    <button class="btn btn-link mb-3 back-button" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Empleados registrados</h2>
+    
+    <!-- Filtros y búsqueda -->
+    <div class="card p-3 mb-4 shadow-sm">
+      <div class="row">
+        <div class="col-md-6 mb-3 mb-md-0">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-filter"></i></span>
+            <select class="form-select" id="filtroSucursalAdmin">
+              <option value="">Todas las sucursales</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="buscarEmpleado" placeholder="Buscar empleado...">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading skeleton -->
+    <div id="loading-skeleton" class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Sucursal</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="skeleton rounded-circle" style="width: 50px; height: 50px;"></div></td>
+            <td><div class="skeleton" style="height: 20px; width: 150px;"></div></td>
+            <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+            <td><div class="skeleton" style="height: 30px; width: 200px;"></div></td>
+          </tr>
+          <tr>
+            <td><div class="skeleton rounded-circle" style="width: 50px; height: 50px;"></div></td>
+            <td><div class="skeleton" style="height: 20px; width: 130px;"></div></td>
+            <td><div class="skeleton" style="height: 20px; width: 120px;"></div></td>
+            <td><div class="skeleton" style="height: 30px; width: 200px;"></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Tabla de empleados -->
+    <div id="tabla-container" class="table-responsive" style="display: none;">
+      <table class="table table-striped table-hover" id="employeeTable">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Sucursal</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    
+    <!-- Mensaje sin resultados -->
+    <div id="no-results" class="text-center py-5 card shadow-sm" style="display: none;">
+      <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+      <p class="lead">No se encontraron empleados con los filtros seleccionados</p>
+    </div>
+  </div>
+
+  <!-- The Agregar Sucursal section has been merged into Administrar Sucursales -->
+
+  <!-- Modal Editar -->
+  <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formEditarEmpleado" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title">Editar empleado</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-id">
+            <div class="mb-3">
+              <label for="edit-name" class="form-label">Nombre</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" id="edit-name" class="form-control" required>
+                <div class="invalid-feedback">
+                  Por favor ingresa el nombre del empleado
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-branch" class="form-label">Sucursal</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                <select id="edit-branch" class="form-select" required>
+                  <option value="" selected disabled>Seleccionar sucursal</option>
+                </select>
+                <div class="invalid-feedback">
+                  Por favor selecciona una sucursal
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-photo" class="form-label">Foto (opcional)</label>
+              <div class="file-upload-wrapper">
+                <div class="drag-drop-zone" id="editDragDropZone">
+                  <i class="fas fa-cloud-upload-alt fa-2x mb-2"></i>
+                  <p class="mb-0">Arrastra una imagen aquí o haz clic para seleccionar</p>
+                  <input type="file" id="edit-photo" class="form-control d-none" accept="image/*">
+                </div>
+                <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
+                <img id="editPhotoPreview" class="file-upload-preview mt-3" alt="Vista previa">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarEdicion">
+              <span id="btnGuardarEdicionText">Actualizar</span>
+              <span id="btnGuardarEdicionSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección Administrar Sucursales -->
+  <div class="container py-4 d-none" id="seccion-administrar-sucursales">
+    <button class="btn btn-link mb-3 back-button" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Administrar sucursales</h2>
+    
+    <!-- Formulario para agregar sucursal -->
+    <div class="card p-4 shadow-sm mb-4">
+      <h5 class="mb-3">Agregar nueva sucursal</h5>
+      <form id="branchForm" class="needs-validation" novalidate>
+        <div class="row">
+          <div class="col-md-5 mb-3">
+            <label for="branchName" class="form-label">Nombre de la sucursal</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-building"></i></span>
+              <input type="text" class="form-control" id="branchName" required pattern="^[a-zA-Z0-9]+$">
+              <div class="invalid-feedback">
+                El nombre debe ser una sola palabra sin espacios ni caracteres especiales
+              </div>
+            </div>
+            <div class="form-text">El nombre debe ser una sola palabra sin espacios ni caracteres especiales.</div>
+          </div>
+          <div class="col-md-5 mb-3">
+            <label for="branchAddress" class="form-label">Dirección</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+              <input type="text" class="form-control" id="branchAddress">
+            </div>
+          </div>
+          <div class="col-md-2 mb-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100" id="btnGuardarSucursal">
+              <span id="btnGuardarSucursalText">Crear</span>
+              <span id="btnGuardarSucursalSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Tabla de sucursales -->
+    <div class="card p-4 shadow-sm mb-4">
+      <h5 class="mb-3">Listado de sucursales</h5>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Dirección</th>
+              <th>Empleados</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="branchesTable">
+            <!-- Contenido dinámico -->
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Sucursal -->
+  <div class="modal fade" id="modalEditarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formEditarSucursal" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title">Editar sucursal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-branch-id">
+            <div class="mb-3">
+              <label for="edit-branch-name" class="form-label">Nombre de la sucursal</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                <input type="text" id="edit-branch-name" class="form-control" required pattern="^[a-zA-Z0-9]+$">
+                <div class="invalid-feedback">
+                  El nombre debe ser una sola palabra sin espacios ni caracteres especiales
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-branch-address" class="form-label">Dirección</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                <input type="text" id="edit-branch-address" class="form-control">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarEdicionSucursal">
+              <span id="btnGuardarEdicionSucursalText">Actualizar</span>
+              <span id="btnGuardarEdicionSucursalSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cambiar Sucursal de Empleado -->
+  <div class="modal fade" id="modalCambiarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formCambiarSucursal" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title">Cambiar sucursal del empleado</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="cambiar-empleado-id">
+            <p>Empleado: <strong id="cambiar-empleado-nombre"></strong></p>
+            <p>Sucursal actual: <strong id="cambiar-sucursal-actual"></strong></p>
+            
+            <div class="mb-3">
+              <label for="cambiar-sucursal-nueva" class="form-label">Nueva sucursal</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                <select id="cambiar-sucursal-nueva" class="form-select" required>
+                  <option value="" selected disabled>Seleccionar sucursal</option>
+                </select>
+                <div class="invalid-feedback">
+                  Por favor selecciona una sucursal
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarCambioSucursal">
+              <span id="btnGuardarCambioSucursalText">Cambiar sucursal</span>
+              <span id="btnGuardarCambioSucursalSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación -->
+  <div class="modal fade" id="modalConfirmacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmacionTitulo">Confirmar acción</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="confirmacionMensaje">¿Estás seguro de que deseas realizar esta acción?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmarAccion">
+            <span id="btnConfirmarAccionText">Confirmar</span>
+            <span id="btnConfirmarAccionSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Variables globales
+    let empleadoIdAEliminar = null;
+    let empleadoIdAToggle = null;
+    let todosLosEmpleados = [];
+    
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('isSuperAdmin');
+      window.location.href = 'login.html';
+    }
+
+    function mostrarMensaje(tipo, texto) {
+      const toastContainer = document.querySelector('.toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-white bg-${tipo} border-0`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      
+      // Seleccionar el icono adecuado según el tipo
+      let icono = 'fa-check-circle';
+      if (tipo === 'danger') icono = 'fa-exclamation-circle';
+      else if (tipo === 'warning') icono = 'fa-exclamation-triangle';
+      else if (tipo === 'info') icono = 'fa-info-circle';
+      
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="fas ${icono} me-2"></i>
+            ${texto}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+      
+      toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+      });
+    }
+
+    function mostrarSeccion(nombre) {
+      document.querySelectorAll('[id^="seccion-"]').forEach(div => {
+        div.classList.add('d-none');
+        div.classList.remove('section-enter');
+      });
+      document.getElementById('menu-principal').classList.add('d-none');
+      
+      // Redirect "sucursal" to "administrar-sucursales" to merge the sections
+      if (nombre === 'sucursal') {
+        nombre = 'administrar-sucursales';
+      }
+      
+      const seccion = document.getElementById(`seccion-${nombre}`);
+      seccion.classList.remove('d-none');
+      seccion.classList.add('section-enter');
+      
+      // Load data based on section
+      if (nombre === 'administrar') {
+        cargarEmpleados();
+      } else if (nombre === 'administrar-sucursales') {
+        cargarSucursalesAdmin();
+      }
+    }
+
+    function volverAlMenu() {
+      document.querySelectorAll('[id^="seccion-"]').forEach(div => {
+        div.classList.add('d-none');
+        div.classList.remove('section-enter');
+      });
+      document.getElementById('menu-principal').classList.remove('d-none');
+    }
+    
+    // Validar tamaño y tipo de archivo
+    function validarArchivo(file) {
+      // Validar tamaño (5MB máximo)
+      const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+      if (file.size > maxSize) {
+        mostrarMensaje('warning', 'El archivo es demasiado grande. El tamaño máximo es 5MB.');
+        return false;
+      }
+      
+      // Validar tipo
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        mostrarMensaje('warning', 'Formato de archivo no válido. Usa JPG, PNG o GIF.');
+        return false;
+      }
+      
+      return true;
+    }
+
+    // Mostrar vista previa de imagen
+    function mostrarVistaPrevia(input, previewId) {
+      const preview = document.getElementById(previewId);
+      
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        if (!validarArchivo(file)) {
+          input.value = '';
+          preview.style.display = 'none';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+    
+    // Filtrar empleados según búsqueda y filtro de sucursal
+    function filtrarEmpleados() {
+      if (!todosLosEmpleados.length) return;
+      
+      const busqueda = document.getElementById('buscarEmpleado').value.toLowerCase();
+      const filtroSucursal = document.getElementById('filtroSucursalAdmin').value;
+      
+      const empleadosFiltrados = todosLosEmpleados.filter(e => {
+        const coincideBusqueda = e.name.toLowerCase().includes(busqueda);
+        const coincideSucursal = !filtroSucursal || e.branchId.toString() === filtroSucursal;
+        return coincideBusqueda && coincideSucursal;
+      });
+      
+      const tbody = document.querySelector('#employeeTable tbody');
+      tbody.innerHTML = '';
+      
+      if (empleadosFiltrados.length === 0) {
+        document.getElementById('tabla-container').style.display = 'none';
+        document.getElementById('no-results').style.display = 'block';
+        return;
+      }
+      
+      document.getElementById('tabla-container').style.display = 'block';
+      document.getElementById('no-results').style.display = 'none';
+      
+      empleadosFiltrados.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img src="${e.photoUrl}" class="employee-img" alt="${e.name}"></td>
+          <td>${e.name}</td>
+          <td>${e.branch.name}</td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick="editarEmpleado(${e.id})">
+              <i class="fas fa-edit me-1"></i> Editar
+            </button>
+            <button class="btn btn-sm btn-${e.active ? 'warning' : 'success'} me-1" onclick="confirmarToggleEmpleado(${e.id})">
+              <i class="fas fa-${e.active ? 'ban' : 'check-circle'} me-1"></i> ${e.active ? 'Deshabilitar' : 'Habilitar'}
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="confirmarEliminarEmpleado(${e.id})">
+              <i class="fas fa-trash-alt me-1"></i> Eliminar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function inicializar() {
+      const token = localStorage.getItem('token');
+      const isSuperAdmin = localStorage.getItem('isSuperAdmin') === 'true';
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+      if (!isSuperAdmin) {
+        document.getElementById('btnUsuarios')?.classList.add('d-none');
+        document.getElementById('btnAgregarSucursal')?.classList.add('d-none');
+      }
+      
+      // Configurar drag and drop para subida de archivos
+      configurarDragDrop('dragDropZone', 'photo', 'photoPreview');
+      configurarDragDrop('editDragDropZone', 'edit-photo', 'editPhotoPreview');
+      
+      // Inicializar validación de formularios
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+      
+      // Configurar búsqueda de empleados
+      document.getElementById('buscarEmpleado')?.addEventListener('input', filtrarEmpleados);
+      document.getElementById('filtroSucursalAdmin')?.addEventListener('change', filtrarEmpleados);
+      
+      // Configurar modal de confirmación
+      document.getElementById('btnConfirmarAccion').addEventListener('click', async () => {
+        const btnConfirmar = document.getElementById('btnConfirmarAccion');
+        const btnText = document.getElementById('btnConfirmarAccionText');
+        const btnSpinner = document.getElementById('btnConfirmarAccionSpinner');
+        
+        btnConfirmar.disabled = true;
+        btnText.textContent = 'Procesando...';
+        btnSpinner.classList.remove('d-none');
+        
+        if (empleadoIdAEliminar) {
+          await eliminarEmpleado(empleadoIdAEliminar);
+          empleadoIdAEliminar = null;
+        } else if (empleadoIdAToggle) {
+          await toggleEmpleado(empleadoIdAToggle);
+          empleadoIdAToggle = null;
+        }
+        
+        btnConfirmar.disabled = false;
+        btnText.textContent = 'Confirmar';
+        btnSpinner.classList.add('d-none');
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion')).hide();
+      });
+      
+      await cargarSucursales();
+    }
+    
+    function configurarDragDrop(zoneId, inputId, previewId) {
+      const dropZone = document.getElementById(zoneId);
+      const fileInput = document.getElementById(inputId);
+      
+      if (!dropZone || !fileInput) return;
+      
+      // Hacer clic en la zona para seleccionar archivo
+      dropZone.addEventListener('click', () => fileInput.click());
+      
+      // Cambio en el input file
+      fileInput.addEventListener('change', () => {
+        mostrarVistaPrevia(fileInput, previewId);
+      });
+      
+      // Eventos de arrastrar y soltar
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+      
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+      
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          mostrarVistaPrevia(fileInput, previewId);
+        }
+      });
+    }
+
+    async function cargarSucursales() {
+      try {
+        const res = await fetch('/branches', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar sucursales');
+        }
+        
+        const branches = await res.json();
+        
+        // Actualizar select de agregar empleado
+        const select = document.getElementById('branch');
+        if (select) {
+          select.innerHTML = '<option value="" selected disabled>Seleccionar sucursal</option>';
+          branches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            select.appendChild(opt);
+          });
+        }
+        
+        // Actualizar select de editar empleado
+        const selectEdit = document.getElementById('edit-branch');
+        if (selectEdit) {
+          selectEdit.innerHTML = '<option value="" selected disabled>Seleccionar sucursal</option>';
+          branches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            selectEdit.appendChild(opt);
+          });
+        }
+        
+        // Actualizar filtro de sucursales
+        const filtroSucursal = document.getElementById('filtroSucursalAdmin');
+        if (filtroSucursal) {
+          filtroSucursal.innerHTML = '<option value="">Todas las sucursales</option>';
+          branches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            filtroSucursal.appendChild(opt);
+          });
+        }
+      } catch (error) {
+        mostrarMensaje('danger', 'Error al cargar sucursales');
+      }
+    }
+
+    async function cargarEmpleados() {
+      try {
+        // Mostrar skeleton loader
+        document.getElementById('loading-skeleton').style.display = 'block';
+        document.getElementById('tabla-container').style.display = 'none';
+        document.getElementById('no-results').style.display = 'none';
+        
+        const res = await fetch('/employees', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar empleados');
+        }
+        
+        todosLosEmpleados = await res.json();
+        
+        // Ocultar skeleton y mostrar tabla
+        document.getElementById('loading-skeleton').style.display = 'none';
+        
+        if (todosLosEmpleados.length === 0) {
+          document.getElementById('no-results').style.display = 'block';
+          return;
+        }
+        
+        document.getElementById('tabla-container').style.display = 'block';
+        
+        const tbody = document.querySelector('#employeeTable tbody');
+        tbody.innerHTML = '';
+        
+        todosLosEmpleados.forEach(e => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><img src="${e.photoUrl}" class="employee-img" alt="${e.name}"></td>
+            <td>${e.name}</td>
+            <td>${e.branch.name}</td>
+            <td>
+              <button class="btn btn-sm btn-primary me-1" onclick="editarEmpleado(${e.id})">
+                <i class="fas fa-edit me-1"></i> Editar
+              </button>
+              <button class="btn btn-sm btn-${e.active ? 'warning' : 'success'} me-1" onclick="confirmarToggleEmpleado(${e.id})">
+                <i class="fas fa-${e.active ? 'ban' : 'check-circle'} me-1"></i> ${e.active ? 'Deshabilitar' : 'Habilitar'}
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="confirmarEliminarEmpleado(${e.id})">
+                <i class="fas fa-trash-alt me-1"></i> Eliminar
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        document.getElementById('loading-skeleton').style.display = 'none';
+        mostrarMensaje('danger', 'Error al cargar empleados');
+      }
+    }
+    
+    function confirmarToggleEmpleado(id) {
+      const empleado = todosLosEmpleados.find(e => e.id === id);
+      if (!empleado) return;
+      
+      empleadoIdAToggle = id;
+      empleadoIdAEliminar = null;
+      
+      const accion = empleado.active ? 'deshabilitar' : 'habilitar';
+      document.getElementById('confirmacionTitulo').textContent = `${accion.charAt(0).toUpperCase() + accion.slice(1)} empleado`;
+      document.getElementById('confirmacionMensaje').textContent = `¿Estás seguro de que deseas ${accion} a ${empleado.name}?`;
+      document.getElementById('btnConfirmarAccion').className = `btn btn-${empleado.active ? 'warning' : 'success'}`;
+      document.getElementById('btnConfirmarAccionText').textContent = accion.charAt(0).toUpperCase() + accion.slice(1);
+      
+      new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+    }
+    
+    function confirmarEliminarEmpleado(id) {
+      const empleado = todosLosEmpleados.find(e => e.id === id);
+      if (!empleado) return;
+      
+      empleadoIdAEliminar = id;
+      empleadoIdAToggle = null;
+      
+      document.getElementById('confirmacionTitulo').textContent = 'Eliminar empleado';
+      document.getElementById('confirmacionMensaje').textContent = `¿Estás seguro de que deseas eliminar a ${empleado.name}? Esta acción no se puede deshacer.`;
+      document.getElementById('btnConfirmarAccion').className = 'btn btn-danger';
+      document.getElementById('btnConfirmarAccionText').textContent = 'Eliminar';
+      
+      new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+    }
+
+    async function toggleEmpleado(id) {
+      try {
+        const res = await fetch(`/employees/${id}/toggle`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al cambiar estado');
+        }
+        
+        mostrarMensaje('success', 'Estado del empleado actualizado correctamente');
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cambiar estado');
+      }
+    }
+
+    async function eliminarEmpleado(id) {
+      try {
+        const res = await fetch(`/employees/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al eliminar empleado');
+        }
+        
+        mostrarMensaje('success', 'Empleado eliminado correctamente');
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al eliminar empleado');
+      }
+    }
+
+    async function editarEmpleado(id) {
+      try {
+        const res = await fetch(`/employees/${id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar datos del empleado');
+        }
+        
+        const empleado = await res.json();
+        
+        document.getElementById('edit-id').value = empleado.id;
+        document.getElementById('edit-name').value = empleado.name;
+        document.getElementById('edit-branch').value = empleado.branchId;
+        
+        // Limpiar vista previa de imagen
+        document.getElementById('editPhotoPreview').style.display = 'none';
+        
+        // Resetear validación
+        const form = document.getElementById('formEditarEmpleado');
+        form.classList.remove('was-validated');
+        
+        new bootstrap.Modal(document.getElementById('modalEditar')).show();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cargar datos del empleado');
+      }
+    }
+
+    document.getElementById('formEditarEmpleado').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarEdicion');
+      const btnText = document.getElementById('btnGuardarEdicionText');
+      const btnSpinner = document.getElementById('btnGuardarEdicionSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Actualizando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const id = document.getElementById('edit-id').value;
+        const name = document.getElementById('edit-name').value;
+        const branchId = document.getElementById('edit-branch').value;
+        const photo = document.getElementById('edit-photo').files[0];
+        
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('branchId', branchId);
+        if (photo) formData.append('photo', photo);
+        
+        const res = await fetch(`/employees/${id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al actualizar empleado');
+        }
+        
+        mostrarMensaje('success', 'Empleado actualizado correctamente');
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al actualizar empleado');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Actualizar';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    document.getElementById('employeeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarEmpleado');
+      const btnText = document.getElementById('btnGuardarEmpleadoText');
+      const btnSpinner = document.getElementById('btnGuardarEmpleadoSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Guardando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const name = document.getElementById('name').value;
+        const branchId = parseInt(document.getElementById('branch').value);
+        const photo = document.getElementById('photo').files[0];
+        
+        if (!photo) {
+          throw new Error('Por favor selecciona una foto para el empleado');
+        }
+        
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('branchId', branchId);
+        formData.append('photo', photo);
+        
+        const res = await fetch('/employees', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al agregar empleado');
+        }
+        
+        mostrarMensaje('success', 'Empleado agregado correctamente ✅');
+        form.reset();
+        document.getElementById('photoPreview').style.display = 'none';
+        form.classList.remove('was-validated');
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al agregar empleado');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Agregar empleado';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    document.getElementById('branchForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarSucursal');
+      const btnText = document.getElementById('btnGuardarSucursalText');
+      const btnSpinner = document.getElementById('btnGuardarSucursalSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Creando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const name = document.getElementById('branchName').value;
+        const address = document.getElementById('branchAddress').value;
+        
+        const res = await fetch('/branches', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ name, address })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al crear sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal creada correctamente');
+        form.reset();
+        form.classList.remove('was-validated');
+        await cargarSucursales();
+        await cargarSucursalesAdmin(); // Actualizar la tabla de sucursales
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al crear sucursal');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Crear sucursal';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    // Cargar sucursales en la tabla de administración
+    async function cargarSucursalesAdmin() {
+      try {
+        const res = await fetch('/branches', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar sucursales');
+        }
+        
+        const sucursales = await res.json();
+        const tabla = document.getElementById('branchesTable');
+        
+        if (sucursales.length === 0) {
+          tabla.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                No hay sucursales registradas
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        tabla.innerHTML = '';
+        
+        for (const sucursal of sucursales) {
+          // Obtener cantidad de empleados en esta sucursal
+          const resEmpleados = await fetch(`/employees?branchId=${sucursal.id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          
+          if (!resEmpleados.ok) {
+            throw new Error('Error al cargar empleados');
+          }
+          
+          const empleados = await resEmpleados.json();
+          const cantidadEmpleados = empleados.length;
+          
+          const row = document.createElement('tr');
+          row.className = 'fade-in';
+          row.innerHTML = `
+            <td>${sucursal.name}</td>
+            <td>${sucursal.address || '-'}</td>
+            <td>${cantidadEmpleados}</td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" onclick="editarSucursal(${sucursal.id})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger ${cantidadEmpleados > 0 ? 'disabled' : ''}" 
+                  ${cantidadEmpleados > 0 ? 'disabled title="No se puede eliminar una sucursal con empleados"' : `onclick="confirmarEliminarSucursal(${sucursal.id}, '${sucursal.name}')"`}>
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tabla.appendChild(row);
+        }
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cargar sucursales');
+      }
+    }
+
+    // Editar sucursal
+    async function editarSucursal(id) {
+      try {
+        const res = await fetch(`/branches/${id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar datos de la sucursal');
+        }
+        
+        const sucursal = await res.json();
+        
+        document.getElementById('edit-branch-id').value = sucursal.id;
+        document.getElementById('edit-branch-name').value = sucursal.name;
+        document.getElementById('edit-branch-address').value = sucursal.address || '';
+        
+        // Resetear validación
+        const form = document.getElementById('formEditarSucursal');
+        form.classList.remove('was-validated');
+        
+        new bootstrap.Modal(document.getElementById('modalEditarSucursal')).show();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cargar datos de la sucursal');
+      }
+    }
+
+    // Confirmar eliminación de sucursal
+    function confirmarEliminarSucursal(id, nombre) {
+      document.getElementById('confirmacionTitulo').textContent = 'Eliminar sucursal';
+      document.getElementById('confirmacionMensaje').textContent = `¿Estás seguro de que deseas eliminar la sucursal ${nombre}? Esta acción no se puede deshacer.`;
+      document.getElementById('btnConfirmarAccion').className = 'btn btn-danger';
+      document.getElementById('btnConfirmarAccionText').textContent = 'Eliminar';
+      
+      // Guardar el ID para usarlo en el evento de confirmación
+      document.getElementById('btnConfirmarAccion').onclick = () => eliminarSucursal(id);
+      
+      new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+    }
+
+    // Eliminar sucursal
+    async function eliminarSucursal(id) {
+      const btnConfirmar = document.getElementById('btnConfirmarAccion');
+      const btnText = document.getElementById('btnConfirmarAccionText');
+      const btnSpinner = document.getElementById('btnConfirmarAccionSpinner');
+      
+      btnConfirmar.disabled = true;
+      btnText.textContent = 'Eliminando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const res = await fetch(`/branches/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al eliminar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal eliminada correctamente');
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion')).hide();
+        await cargarSucursalesAdmin();
+        await cargarSucursales(); // Actualizar los selectores de sucursales
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al eliminar sucursal');
+      } finally {
+        btnConfirmar.disabled = false;
+        btnText.textContent = 'Eliminar';
+        btnSpinner.classList.add('d-none');
+      }
+    }
+
+    // Formulario para editar sucursal
+    document.getElementById('formEditarSucursal').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarEdicionSucursal');
+      const btnText = document.getElementById('btnGuardarEdicionSucursalText');
+      const btnSpinner = document.getElementById('btnGuardarEdicionSucursalSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Actualizando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const id = document.getElementById('edit-branch-id').value;
+        const name = document.getElementById('edit-branch-name').value;
+        const address = document.getElementById('edit-branch-address').value;
+        
+        const res = await fetch(`/branches/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ name, address })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al actualizar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal actualizada correctamente');
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarSucursal')).hide();
+        await cargarSucursalesAdmin();
+        await cargarSucursales(); // Actualizar los selectores de sucursales
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al actualizar sucursal');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Actualizar';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    // Mostrar modal para cambiar sucursal de empleado
+    function mostrarCambiarSucursal(empleado) {
+      document.getElementById('cambiar-empleado-id').value = empleado.id;
+      document.getElementById('cambiar-empleado-nombre').textContent = empleado.name;
+      document.getElementById('cambiar-sucursal-actual').textContent = empleado.branch.name;
+      
+      // Seleccionar la sucursal actual en el dropdown
+      const select = document.getElementById('cambiar-sucursal-nueva');
+      select.value = empleado.branchId;
+      
+      // Resetear validación
+      const form = document.getElementById('formCambiarSucursal');
+      form.classList.remove('was-validated');
+      
+      new bootstrap.Modal(document.getElementById('modalCambiarSucursal')).show();
+    }
+
+    // Formulario para cambiar sucursal de empleado
+    document.getElementById('formCambiarSucursal').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarCambioSucursal');
+      const btnText = document.getElementById('btnGuardarCambioSucursalText');
+      const btnSpinner = document.getElementById('btnGuardarCambioSucursalSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Cambiando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const id = document.getElementById('cambiar-empleado-id').value;
+        const branchId = document.getElementById('cambiar-sucursal-nueva').value;
+        
+        const res = await fetch(`/employees/${id}/branch`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ branchId })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al cambiar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal del empleado actualizada correctamente');
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalCambiarSucursal')).hide();
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cambiar sucursal');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Cambiar sucursal';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', inicializar);
+  </script>
+</body>
+</html>
