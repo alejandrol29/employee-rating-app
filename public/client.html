@@ -393,11 +393,11 @@
           actualizarEstrellas(0);
           
           // Show success message
-          if (ratingSeleccionado <= 2) {
-            showToast('Gracias por tu comentario, lo tendremos en cuenta.', 'success');
-          } else {
-            showToast('¡Gracias por tu calificación!', 'success');
+          if (ratingSeleccionado >= 3) {
+            showToast('¡Gracias por tus comentarios!', 'success');
             createConfetti();
+          } else {
+            showToast('Lamentamos la mala experiencia, tendremos en cuenta tus comentarios.', 'success');
           }
         } else {
           // Show error message
