@@ -40,11 +40,15 @@
           </div>
         </div>
         <div class="d-grid gap-2 mt-4">
-          <button type="submit" class="btn btn-primary" id="loginButton">
-            <span id="loginText">Ingresar</span>
-            <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+          <button type="submit" class="btn btn-primary w-100" id="loginButton">
+            Ingresar
           </button>
-        </div>
+          <div id="loginSpinnerContainer" class="text-center mt-2 d-none">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        </div>        
       </form>
     </div>
   </div>
@@ -115,8 +119,8 @@
       const username = document.getElementById('username');
       const password = document.getElementById('password');
       const loginButton = document.getElementById('loginButton');
-      const loginText = document.getElementById('loginText');
-      const loginSpinner = document.getElementById('loginSpinner');
+      const loginSpinnerContainer = document.getElementById('loginSpinnerContainer');
+
       
       // Reset validation state
       form.classList.remove('was-validated');
@@ -129,8 +133,7 @@
       
       // Show loading state
       loginButton.disabled = true;
-      loginText.textContent = 'Ingresando...';
-      loginSpinner.classList.remove('d-none');
+      loginSpinnerContainer.classList.remove('d-none');
       
       try {
         const res = await fetch('/login', {
@@ -161,7 +164,6 @@
               mostrarMensaje('danger', 'No tienes una sucursal asignada.');
               // Reset button state
               loginButton.disabled = false;
-              loginText.textContent = 'Ingresar';
               loginSpinner.classList.add('d-none');
             }
           }, 1000);
@@ -169,14 +171,12 @@
           mostrarMensaje('danger', data.error || 'Error al iniciar sesión');
           // Reset button state
           loginButton.disabled = false;
-          loginText.textContent = 'Ingresar';
           loginSpinner.classList.add('d-none');
         }
       } catch (error) {
         mostrarMensaje('danger', 'Error de conexión. Intenta nuevamente.');
         // Reset button state
         loginButton.disabled = false;
-        loginText.textContent = 'Ingresar';
         loginSpinner.classList.add('d-none');
       }
     });
