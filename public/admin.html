@@ -151,7 +151,10 @@
         <i class="fas fa-users-cog me-2"></i> Administrar empleados
       </button>
       <button id="btnAgregarSucursal" class="btn btn-outline-dark fw-semibold admin-button" onclick="mostrarSeccion('sucursal')">
-        <i class="fas fa-building me-2"></i> Agregar sucursal
+        <i class="fas fa-building-circle-plus me-2"></i> Agregar sucursal
+      </button>
+      <button id="btnAdministrarSucursales" class="btn btn-outline-dark fw-semibold admin-button" onclick="mostrarSeccion('administrar-sucursales')">
+        <i class="fas fa-building-user me-2"></i> Administrar sucursales
       </button>
       <a href="estadisticas.html" class="btn btn-outline-dark fw-semibold admin-button">
         <i class="fas fa-chart-bar me-2"></i> Ver estadísticas
@@ -367,6 +370,117 @@
             <button type="submit" class="btn btn-primary" id="btnGuardarEdicion">
               <span id="btnGuardarEdicionText">Actualizar</span>
               <span id="btnGuardarEdicionSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección Administrar Sucursales -->
+  <div class="container py-4 d-none" id="seccion-administrar-sucursales">
+    <button class="btn btn-link mb-3 back-button" onclick="volverAlMenu()"><i class="fas fa-arrow-left fs-4"></i></button>
+    <h2 class="text-center mb-4">Administrar sucursales</h2>
+    
+    <div class="card p-4 shadow-sm mb-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Dirección</th>
+              <th>Empleados</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="branchesTable">
+            <!-- Contenido dinámico -->
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Sucursal -->
+  <div class="modal fade" id="modalEditarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formEditarSucursal" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title">Editar sucursal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-branch-id">
+            <div class="mb-3">
+              <label for="edit-branch-name" class="form-label">Nombre de la sucursal</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                <input type="text" id="edit-branch-name" class="form-control" required pattern="^[a-zA-Z0-9]+$">
+                <div class="invalid-feedback">
+                  El nombre debe ser una sola palabra sin espacios ni caracteres especiales
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="edit-branch-address" class="form-label">Dirección</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                <input type="text" id="edit-branch-address" class="form-control">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarEdicionSucursal">
+              <span id="btnGuardarEdicionSucursalText">Actualizar</span>
+              <span id="btnGuardarEdicionSucursalSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cambiar Sucursal de Empleado -->
+  <div class="modal fade" id="modalCambiarSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formCambiarSucursal" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title">Cambiar sucursal del empleado</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="cambiar-empleado-id">
+            <p>Empleado: <strong id="cambiar-empleado-nombre"></strong></p>
+            <p>Sucursal actual: <strong id="cambiar-sucursal-actual"></strong></p>
+            
+            <div class="mb-3">
+              <label for="cambiar-sucursal-nueva" class="form-label">Nueva sucursal</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                <select id="cambiar-sucursal-nueva" class="form-select" required>
+                  <option value="" selected disabled>Seleccionar sucursal</option>
+                </select>
+                <div class="invalid-feedback">
+                  Por favor selecciona una sucursal
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarCambioSucursal">
+              <span id="btnGuardarCambioSucursalText">Cambiar sucursal</span>
+              <span id="btnGuardarCambioSucursalSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
             </button>
           </div>
         </form>
@@ -997,7 +1111,8 @@
         });
         
         if (!res.ok) {
-          throw new Error('Error al crear sucursal');
+          const data = await res.json();
+          throw new Error(data.error || 'Error al crear sucursal');
         }
         
         mostrarMensaje('success', 'Sucursal creada correctamente');
@@ -1009,6 +1124,265 @@
       } finally {
         btnGuardar.disabled = false;
         btnText.textContent = 'Crear sucursal';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    // Cargar sucursales en la tabla de administración
+    async function cargarSucursalesAdmin() {
+      try {
+        const res = await fetch('/branches', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar sucursales');
+        }
+        
+        const sucursales = await res.json();
+        const tabla = document.getElementById('branchesTable');
+        
+        if (sucursales.length === 0) {
+          tabla.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center py-4">
+                No hay sucursales registradas
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        tabla.innerHTML = '';
+        
+        for (const sucursal of sucursales) {
+          // Obtener cantidad de empleados en esta sucursal
+          const resEmpleados = await fetch(`/employees?branchId=${sucursal.id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          
+          if (!resEmpleados.ok) {
+            throw new Error('Error al cargar empleados');
+          }
+          
+          const empleados = await resEmpleados.json();
+          const cantidadEmpleados = empleados.length;
+          
+          const row = document.createElement('tr');
+          row.className = 'fade-in';
+          row.innerHTML = `
+            <td>${sucursal.name}</td>
+            <td>${sucursal.address || '-'}</td>
+            <td>${cantidadEmpleados}</td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" onclick="editarSucursal(${sucursal.id})">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger ${cantidadEmpleados > 0 ? 'disabled' : ''}" 
+                  onclick="confirmarEliminarSucursal(${sucursal.id}, '${sucursal.name}')" 
+                  ${cantidadEmpleados > 0 ? 'disabled title="No se puede eliminar una sucursal con empleados"' : ''}>
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tabla.appendChild(row);
+        }
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cargar sucursales');
+      }
+    }
+
+    // Editar sucursal
+    async function editarSucursal(id) {
+      try {
+        const res = await fetch(`/branches/${id}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar datos de la sucursal');
+        }
+        
+        const sucursal = await res.json();
+        
+        document.getElementById('edit-branch-id').value = sucursal.id;
+        document.getElementById('edit-branch-name').value = sucursal.name;
+        document.getElementById('edit-branch-address').value = sucursal.address || '';
+        
+        // Resetear validación
+        const form = document.getElementById('formEditarSucursal');
+        form.classList.remove('was-validated');
+        
+        new bootstrap.Modal(document.getElementById('modalEditarSucursal')).show();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cargar datos de la sucursal');
+      }
+    }
+
+    // Confirmar eliminación de sucursal
+    function confirmarEliminarSucursal(id, nombre) {
+      document.getElementById('confirmacionTitulo').textContent = 'Eliminar sucursal';
+      document.getElementById('confirmacionMensaje').textContent = `¿Estás seguro de que deseas eliminar la sucursal ${nombre}? Esta acción no se puede deshacer.`;
+      document.getElementById('btnConfirmarAccion').className = 'btn btn-danger';
+      document.getElementById('btnConfirmarAccionText').textContent = 'Eliminar';
+      
+      // Guardar el ID para usarlo en el evento de confirmación
+      document.getElementById('btnConfirmarAccion').onclick = () => eliminarSucursal(id);
+      
+      new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+    }
+
+    // Eliminar sucursal
+    async function eliminarSucursal(id) {
+      const btnConfirmar = document.getElementById('btnConfirmarAccion');
+      const btnText = document.getElementById('btnConfirmarAccionText');
+      const btnSpinner = document.getElementById('btnConfirmarAccionSpinner');
+      
+      btnConfirmar.disabled = true;
+      btnText.textContent = 'Eliminando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const res = await fetch(`/branches/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al eliminar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal eliminada correctamente');
+        bootstrap.Modal.getInstance(document.getElementById('modalConfirmacion')).hide();
+        await cargarSucursalesAdmin();
+        await cargarSucursales(); // Actualizar los selectores de sucursales
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al eliminar sucursal');
+      } finally {
+        btnConfirmar.disabled = false;
+        btnText.textContent = 'Eliminar';
+        btnSpinner.classList.add('d-none');
+      }
+    }
+
+    // Formulario para editar sucursal
+    document.getElementById('formEditarSucursal').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarEdicionSucursal');
+      const btnText = document.getElementById('btnGuardarEdicionSucursalText');
+      const btnSpinner = document.getElementById('btnGuardarEdicionSucursalSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Actualizando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const id = document.getElementById('edit-branch-id').value;
+        const name = document.getElementById('edit-branch-name').value;
+        const address = document.getElementById('edit-branch-address').value;
+        
+        const res = await fetch(`/branches/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ name, address })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al actualizar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal actualizada correctamente');
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarSucursal')).hide();
+        await cargarSucursalesAdmin();
+        await cargarSucursales(); // Actualizar los selectores de sucursales
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al actualizar sucursal');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Actualizar';
+        btnSpinner.classList.add('d-none');
+      }
+    });
+
+    // Mostrar modal para cambiar sucursal de empleado
+    function mostrarCambiarSucursal(empleado) {
+      document.getElementById('cambiar-empleado-id').value = empleado.id;
+      document.getElementById('cambiar-empleado-nombre').textContent = empleado.name;
+      document.getElementById('cambiar-sucursal-actual').textContent = empleado.branch.name;
+      
+      // Seleccionar la sucursal actual en el dropdown
+      const select = document.getElementById('cambiar-sucursal-nueva');
+      select.value = empleado.branchId;
+      
+      // Resetear validación
+      const form = document.getElementById('formCambiarSucursal');
+      form.classList.remove('was-validated');
+      
+      new bootstrap.Modal(document.getElementById('modalCambiarSucursal')).show();
+    }
+
+    // Formulario para cambiar sucursal de empleado
+    document.getElementById('formCambiarSucursal').addEventListener('submit', async e => {
+      e.preventDefault();
+      
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      const btnGuardar = document.getElementById('btnGuardarCambioSucursal');
+      const btnText = document.getElementById('btnGuardarCambioSucursalText');
+      const btnSpinner = document.getElementById('btnGuardarCambioSucursalSpinner');
+      
+      btnGuardar.disabled = true;
+      btnText.textContent = 'Cambiando...';
+      btnSpinner.classList.remove('d-none');
+      
+      try {
+        const id = document.getElementById('cambiar-empleado-id').value;
+        const branchId = document.getElementById('cambiar-sucursal-nueva').value;
+        
+        const res = await fetch(`/employees/${id}/branch`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ branchId })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Error al cambiar sucursal');
+        }
+        
+        mostrarMensaje('success', 'Sucursal del empleado actualizada correctamente');
+        form.reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalCambiarSucursal')).hide();
+        await cargarEmpleados();
+      } catch (error) {
+        mostrarMensaje('danger', error.message || 'Error al cambiar sucursal');
+      } finally {
+        btnGuardar.disabled = false;
+        btnText.textContent = 'Cambiar sucursal';
         btnSpinner.classList.add('d-none');
       }
     });

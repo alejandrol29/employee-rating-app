@@ -641,6 +641,116 @@ app.delete('/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/branches/:id', authenticateToken, async (req, res) => {
+  if (!req.user?.isSuperAdmin) {
+    return res.status(403).json({ error: 'Solo administradores globales pueden editar sucursales' });
+  }
+  
+  try {
+    const id = parseInt(req.params.id);
+    const { name, address } = req.body;
+    
+    // Verificar si ya existe otra sucursal con ese nombre
+    const duplicate = await prisma.branch.findFirst({
+      where: {
+        name,
+        NOT: { id }
+      }
+    });
+    
+    if (duplicate) {
+      return res.status(400).json({ error: 'Ya existe otra sucursal con ese nombre' });
+    }
+    
+    const updated = await prisma.branch.update({
+      where: { id },
+      data: { name, address }
+    });
+    
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar sucursal' });
+  }
+});
+
+app.delete('/branches/:id', authenticateToken, async (req, res) => {
+  if (!req.user?.isSuperAdmin) {
+    return res.status(403).json({ error: 'Solo administradores globales pueden eliminar sucursales' });
+  }
+  
+  try {
+    const id = parseInt(req.params.id);
+    
+    const employeeCount = await prisma.employee.count({
+      where: { branchId: id }
+    });
+    
+    if (employeeCount > 0) {
+      return res.status(400).json({ 
+        error: 'No se puede eliminar una sucursal que tiene empleados asignados' 
+      });
+    }
+    
+    await prisma.branch.delete({ where: { id } });
+    res.json({ message: 'Sucursal eliminada correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar sucursal' });
+  }
+});
+
+app.put('/employees/:id/branch', authenticateToken, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { branchId } = req.body;
+    const branchIdInt = parseInt(branchId);
+    
+    // Verificar si el empleado existe
+    const empleado = await prisma.employee.findUnique({
+      where: { id }
+    });
+    
+    if (!empleado) {
+      return res.status(404).json({ error: 'Empleado no encontrado' });
+    }
+    
+    // Verificar si el usuario tiene permisos
+    const usuarioPuedeEditar =
+      req.user.isSuperAdmin ||
+      req.user.branchIds.includes(empleado.branchId) || // sucursal actual
+      req.user.branchIds.includes(branchIdInt); // nueva sucursal
+    
+    if (!usuarioPuedeEditar) {
+      return res.status(403).json({ error: 'No estás autorizado para cambiar la sucursal de este empleado' });
+    }
+    
+    // Verificar si ya existe otro empleado con ese nombre en la misma sucursal
+    const duplicate = await prisma.employee.findFirst({
+      where: {
+        name: empleado.name,
+        branchId: branchIdInt,
+        NOT: { id }
+      }
+    });
+    
+    if (duplicate) {
+      return res.status(400).json({ error: 'Ya existe otro empleado con ese nombre en la sucursal destino' });
+    }
+    
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: { branchId: branchIdInt },
+      include: { branch: true }
+    });
+    
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cambiar sucursal del empleado' });
+  }
+});
+
 app.get('/:branch', (req, res) => {
 res.sendFile(path.join(__dirname, 'public', 'client.html'));
 });
