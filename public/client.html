@@ -254,22 +254,33 @@
       document.getElementById('formCalificacion').reset();
       document.getElementById('emailContainer').classList.add('d-none');
       document.getElementById('star-error').style.display = 'none';
-      
-      // Reset form validation
+
+      // Reset validación
       document.getElementById('formCalificacion').classList.remove('was-validated');
-      
-      // Reset submit button
+
+      // Reset botón
       const submitButton = document.getElementById('submitButton');
       const submitText = document.getElementById('submitText');
       const submitSpinner = document.getElementById('submitSpinner');
       submitButton.disabled = false;
       submitText.textContent = 'Confirmar';
       submitSpinner.classList.add('d-none');
-      
+
       actualizarEstrellas(0);
+
+      // 🔁 Asignar eventos a estrellas cada vez que se abre el modal
+      document.querySelectorAll('.star').forEach(star => {
+        star.onclick = () => {
+          const value = parseInt(star.getAttribute('data-value'));
+          actualizarEstrellas(value);
+          console.log('Rating seleccionado:', ratingSeleccionado);
+        };
+      });
+
       const modal = new bootstrap.Modal(document.getElementById('modalCalificar'));
       modal.show();
     }
+
     
     // Update stars with improved interaction
     function actualizarEstrellas(valor) {
@@ -299,15 +310,19 @@
       }
     }
     
-    // Star rating event listeners
-    document.querySelectorAll('.star').forEach(star => {
-      star.addEventListener('click', () => {
-        const value = parseInt(star.getAttribute('data-value'));
+   // Star rating event listeners con delegación
+    const estrellasContainer = document.getElementById('estrellasContainer');
+
+    estrellasContainer.addEventListener('click', (event) => {
+      if (event.target.classList.contains('star')) {
+        const value = parseInt(event.target.getAttribute('data-value'));
         actualizarEstrellas(value);
-      });
-      
-      star.addEventListener('mouseover', () => {
-        const value = parseInt(star.getAttribute('data-value'));
+      }
+    });
+
+    estrellasContainer.addEventListener('mouseover', (event) => {
+      if (event.target.classList.contains('star')) {
+        const value = parseInt(event.target.getAttribute('data-value'));
         document.querySelectorAll('.star').forEach(s => {
           const val = parseInt(s.getAttribute('data-value'));
           if (val <= value) {
@@ -318,22 +333,23 @@
             s.classList.add('fa-regular');
           }
         });
-      });
-      
-      star.addEventListener('mouseout', () => {
-        document.querySelectorAll('.star').forEach(s => {
-          const val = parseInt(s.getAttribute('data-value'));
-          s.classList.remove('hover');
-          if (val <= ratingSeleccionado) {
-            s.classList.remove('fa-regular');
-            s.classList.add('fas', 'selected');
-          } else {
-            s.classList.remove('fas', 'selected');
-            s.classList.add('fa-regular');
-          }
-        });
+      }
+    });
+
+    estrellasContainer.addEventListener('mouseout', () => {
+      document.querySelectorAll('.star').forEach(s => {
+        const val = parseInt(s.getAttribute('data-value'));
+        s.classList.remove('hover');
+        if (val <= ratingSeleccionado) {
+          s.classList.remove('fa-regular');
+          s.classList.add('fas', 'selected');
+        } else {
+          s.classList.remove('fas', 'selected');
+          s.classList.add('fa-regular');
+        }
       });
     });
+
     
     // Form submission with validation and loading state
     document.getElementById('formCalificacion').addEventListener('submit', async (e) => {
@@ -385,21 +401,22 @@
         });
         
         if (res.ok) {
-          // Hide modal
-          bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
-          
-          // Reset form
-          form.reset();
-          actualizarEstrellas(0);
-          
-          // Show success message
-          if (ratingSeleccionado >= 3) {
-            showToast('¡Gracias por tus comentarios!', 'success');
-            createConfetti();
-          } else {
-            showToast('Lamentamos la mala experiencia, tendremos en cuenta tus comentarios.', 'success');
-          }
-        } else {
+  // Guardar valor local antes de resetear
+  const rating = ratingSeleccionado;
+
+  // Ocultar modal y resetear
+  bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
+  form.reset();
+  actualizarEstrellas(0);
+
+  // Evaluar rating guardado
+  if (rating >= 3) {
+    showToast('¡Gracias por tu calificación!', 'success');
+    createConfetti();
+  } else {
+    showToast('Lamentamos la mala experiencia, tomaremos en cuenta tus comentarios.', 'warning');
+  }
+} else {
           // Show error message
           showToast('Error al enviar calificación. Intenta nuevamente.', 'danger');
           
