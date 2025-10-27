@@ -1,0 +1,22 @@
+services:
+  employee-rating-api:
+    build:
+      context: .
+    image: employee-rating-api:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    volumes:
+      - prisma-data:/app/data
+      - ${HOST_IMAGES_DIR:-./public/images}:/app/public/images
+    healthcheck:
+      test: ["CMD", "node", "-e", "const net=require('net');const port=process.env.PORT||8081;const client=net.createConnection({port},()=>{client.end();process.exit(0);});client.on('error',()=>process.exit(1));"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  prisma-data:
